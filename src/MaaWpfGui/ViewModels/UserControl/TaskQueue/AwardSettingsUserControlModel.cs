@@ -14,6 +14,7 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Windows;
+using MaaWpfGui.Configuration.Factory;
 using MaaWpfGui.Configuration.Single.MaaTask;
 using MaaWpfGui.Helper;
 using MaaWpfGui.Models.AsstTasks;
@@ -102,6 +103,12 @@ public class AwardSettingsUserControlModel : TaskSettingsViewModel, AwardSetting
         set => SetTaskConfig<AwardTask>(t => t.SpecialAccess == value, t => t.SpecialAccess = value);
     }
 
+    public int SwitchTimes
+    {
+        get => GetTaskConfig<AwardTask>().SwitchTimes;
+        set => SetTaskConfig<AwardTask>(t => t.SwitchTimes == value, t => t.SwitchTimes = value);
+    }
+
     public override void RefreshUI(BaseTask baseTask)
     {
         if (baseTask is AwardTask)
@@ -128,6 +135,8 @@ public class AwardSettingsUserControlModel : TaskSettingsViewModel, AwardSetting
                 Orundum = award.Orundum,
                 Mining = award.Mining,
                 SpecialAccess = award.SpecialAccess,
+                SwitchTimes = award.SwitchTimes,
+                ClientType = ConfigFactory.CurrentConfig.Gui.RuntimeSettings.ClientType,
             };
             return taskId switch {
                 int id when id > 0 => (Instances.AsstProxy.AsstSetTaskParamsEncoded(id, task), [id]),

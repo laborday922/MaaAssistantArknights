@@ -49,4 +49,6 @@ public class AwardTask : BaseTask
     /// Gets or sets a value indicating whether 5周年特殊月卡
     /// </summary>
     public bool SpecialAccess { get; set; }
+
+    public int SwitchTimes { get; set; }
 }

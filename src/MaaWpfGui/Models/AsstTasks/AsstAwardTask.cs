@@ -12,6 +12,9 @@
 // </copyright>
 
 #nullable enable
+using System.ComponentModel;
+using MaaWpfGui.Constants.Enums;
+using MaaWpfGui.Extensions;
 using MaaWpfGui.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,6 +27,8 @@ namespace MaaWpfGui.Models.AsstTasks;
 public class AsstAwardTask : AsstBaseTask
 {
     public override AsstTaskType TaskType => AsstTaskType.Award;
+
+    public ClientType ClientType { get; set; } = ClientType.Official;
 
     /// <summary>
     /// Gets or sets a value indicating whether 是否领取每日/每周任务奖励
@@ -61,5 +66,14 @@ public class AsstAwardTask : AsstBaseTask
     [JsonProperty("specialaccess")]
     public bool SpecialAccess { get; set; }
 
-    public override (AsstTaskType TaskType, JObject Params) Serialize() => (TaskType, JObject.FromObject(this));
+    [JsonProperty("switch_times", DefaultValueHandling = DefaultValueHandling.Ignore)]
+    [DefaultValue(0)]
+    public int SwitchTimes { get; set; }
+
+    public override (AsstTaskType TaskType, JObject Params) Serialize()
+    {
+        var (type, task) = (TaskType, JObject.FromObject(this));
+        task["client_type"] = ClientType.ToCustomString();
+        return (type, task);
+    }
 }

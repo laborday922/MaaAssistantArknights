@@ -15,6 +15,8 @@ public:
 
     void set_client_type(std::string client_type) { m_client_type = std::move(client_type); }
 
+    void set_switch_oldest_bilibili(bool enable) noexcept { m_switch_oldest_bilibili = enable; }
+
 private:
     virtual bool _run() override;
 
@@ -31,10 +33,13 @@ private:
     void swipe_account_list(bool to_top = false);
     // 识别并选择m_account
     bool select_account();
+    bool swipe_to_bottom();
+    bool select_oldest_account_bilibili();
 
     std::string m_account;
     std::string m_target_account;
     std::string m_client_type; // 客户端类型
+    bool m_switch_oldest_bilibili = false;
     const std::vector<std::string> SupportedClientType = { "Official",
                                                            "Bilibili",
                                                            "txwy",

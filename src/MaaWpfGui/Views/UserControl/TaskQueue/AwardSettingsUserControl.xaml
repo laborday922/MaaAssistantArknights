@@ -41,6 +41,19 @@
                 Margin="0,10"
                 Content="{DynamicResource ReceiveSpecialAccess}"
                 IsChecked="{Binding ReceiveSpecialAccess}" />
+            <StackPanel Margin="0,10" Orientation="Horizontal">
+                <controls:TextBlock VerticalAlignment="Center" Text="自动切换次数(B服最久未登录)" TextWrapping="Wrap" />
+                <hc:NumericUpDown
+                    Width="70"
+                    Height="30"
+                    Margin="6,0,0,0"
+                    HorizontalAlignment="Left"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Maximum="999"
+                    Minimum="0"
+                    Value="{Binding SwitchTimes, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
         </StackPanel>
     </StackPanel>
 </UserControl>
