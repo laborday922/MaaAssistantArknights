@@ -10,6 +10,17 @@
 #include "Vision/MultiMatcher.h"
 #include "Vision/RegionOCRer.h"
 
+namespace
+{
+inline void account_switch_step(asst::AccountSwitchTask& self, std::string step, json::object details = {})
+{
+    json::value info = self.basic_info_with_what("AccountSwitchStep");
+    details["step"] = std::move(step);
+    info["details"] = std::move(details);
+    self.callback(asst::AsstMsg::SubTaskExtraInfo, info);
+}
+}
+
 bool asst::AccountSwitchTask::_run()
 {
     LogTraceFunction;
@@ -35,20 +46,32 @@ bool asst::AccountSwitchTask::_run()
     }
 
     // 退出到选择账号界面
+    account_switch_step(*this, "NavigateToAccountManager.Begin", json::object { { "client_type", m_client_type } });
     if (!navigate_to_start_page()) {
+        account_switch_step(*this, "NavigateToAccountManager.Failed");
         return false;
     }
+    account_switch_step(*this, "NavigateToAccountManager.Done");
     if (m_switch_oldest_bilibili) {
-        show_account_list();
+        account_switch_step(*this, "ShowAccountList.Begin");
+        if (!show_account_list()) {
+            account_switch_step(*this, "ShowAccountList.Failed");
+            return false;
+        }
+        account_switch_step(*this, "ShowAccountList.Done");
         if (!swipe_to_bottom()) {
+            account_switch_step(*this, "SwipeToBottom.Failed");
             return false;
         }
         if (!select_oldest_account_bilibili()) {
+            account_switch_step(*this, "SelectOldestAccount.Failed");
             return false;
         }
         if (!click_manager_login_button()) {
+            account_switch_step(*this, "ClickLoginButton.Failed");
             return false;
         }
+        account_switch_step(*this, "ClickLoginButton.Done", json::object { { "account_name", m_target_account } });
         json::value info = basic_info_with_what("AccountSwitch");
         info["details"]["account_name"] = m_target_account;
         callback(AsstMsg::SubTaskExtraInfo, info);
@@ -92,6 +115,10 @@ bool asst::AccountSwitchTask::navigate_to_start_page()
     task.set_retry_times(30);
     task.run();
     std::string last_name = task.get_last_task_name();
+    account_switch_step(
+        *this,
+        "NavigateToAccountManager.LastNode",
+        json::object { { "last_task", last_name }, { "client_type", m_client_type } });
     if (last_name == "LoginOther") {
         return true;
     }
@@ -141,7 +168,13 @@ bool asst::AccountSwitchTask::click_manager_login_button()
 
 bool asst::AccountSwitchTask::show_account_list()
 {
-    return ProcessTask(*this, { "AccountManagerListAccount", "AccountManagerListAccountBili" }).run();
+    auto task = ProcessTask(*this, { "AccountManagerListAccount", "AccountManagerListAccountBili" });
+    bool ok = task.run();
+    account_switch_step(
+        *this,
+        "ShowAccountList.LastNode",
+        json::object { { "ok", ok }, { "last_task", task.get_last_task_name() }, { "client_type", m_client_type } });
+    return ok;
 }
 
 bool asst::AccountSwitchTask::swipe_and_select(bool to_top)
@@ -199,11 +232,16 @@ bool asst::AccountSwitchTask::swipe_to_bottom()
     LogTraceFunction;
 
     int repeat = 0;
+    account_switch_step(*this, "SwipeToBottom.Begin");
     while (!need_exit()) {
         if (repeat++ >= 25) {
+            account_switch_step(*this, "SwipeToBottom.Done", json::object { { "swipe_times", repeat } });
             return true;
         }
         swipe_account_list(false);
+        if (repeat == 1 || repeat % 5 == 0) {
+            account_switch_step(*this, "SwipeToBottom.Progress", json::object { { "swipe_times", repeat } });
+        }
         sleep(150);
     }
     return false;
@@ -218,6 +256,7 @@ bool asst::AccountSwitchTask::select_oldest_account_bilibili()
     ocr.set_roi(Rect(150, 100, 980, 560));
     ocr.set_required({});
     if (!ocr.analyze()) {
+        account_switch_step(*this, "SelectOldestAccount.OCRFailed");
         return false;
     }
 
@@ -284,10 +323,12 @@ bool asst::AccountSwitchTask::select_oldest_account_bilibili()
     }
 
     if (!found) {
+        account_switch_step(*this, "SelectOldestAccount.NotFound");
         return false;
     }
 
     m_target_account = best_text;
+    account_switch_step(*this, "SelectOldestAccount.Found", json::object { { "account_name", m_target_account } });
     ctrler()->click(best);
     return true;
 }

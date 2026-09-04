@@ -2005,6 +2005,27 @@ public class AsstProxy
         string what = details["what"]?.ToString() ?? string.Empty;
         switch (what)
         {
+            case "AccountSwitchStep":
+                {
+                    var step = subTaskDetails?["step"]?.ToString() ?? string.Empty;
+                    var clientType = subTaskDetails?["client_type"]?.ToString();
+                    var lastTask = subTaskDetails?["last_task"]?.ToString();
+                    var swipeTimes = subTaskDetails?["swipe_times"]?.ToString();
+                    var accountName = subTaskDetails?["account_name"]?.ToString();
+                    var ok = subTaskDetails?["ok"]?.ToString();
+
+                    var parts = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(clientType)) parts.Add(clientType);
+                    if (!string.IsNullOrWhiteSpace(lastTask)) parts.Add($"last={lastTask}");
+                    if (!string.IsNullOrWhiteSpace(swipeTimes)) parts.Add($"swipe={swipeTimes}");
+                    if (!string.IsNullOrWhiteSpace(accountName)) parts.Add($"account={accountName}");
+                    if (!string.IsNullOrWhiteSpace(ok)) parts.Add($"ok={ok}");
+
+                    var suffix = parts.Count > 0 ? $" ({string.Join(", ", parts)})" : string.Empty;
+                    Instances.TaskQueueViewModel.AddLog($"AccountSwitch: {step}{suffix}", UiLogColor.Info);
+                    break;
+                }
+
             case "StageDrops":
                 {
                     string allDrops = string.Empty;
